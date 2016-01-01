@@ -51,6 +51,11 @@ server {
   resolver_timeout 5s;
   <% end %>
 
+  <% if @scts %>
+  ssl_ct on;
+  ssl_ct_static_scts <%= @scts_dir %>;
+  <% end %>
+
   keepalive_timeout 300;
   return 301 https://<%= @fqdn %>$request_uri;
 }
@@ -75,6 +80,11 @@ server {
   ssl_stapling_verify on;
   resolver 8.8.8.8 8.8.4.4 valid=300s;
   resolver_timeout 5s;
+  <% end %>
+
+  <% if @scts %>
+  ssl_ct on;
+  ssl_ct_static_scts <%= @scts_dir %>;
   <% end %>
 
   keepalive_timeout 300;

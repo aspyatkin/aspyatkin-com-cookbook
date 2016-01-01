@@ -128,6 +128,29 @@ file ssl_certificate_key_path do
   action :create
 end
 
+scts_dir = ::File.join node[:nginx][:dir], 'scts', cert_name
+
+directory scts_dir do
+  owner 'root'
+  group node['root_group']
+  mode 0700
+  recursive true
+  action :create
+end
+
+require 'base64'
+
+data_bag_item(id, node.chef_environment)['scts'].each do |name, data|
+  path = ::File.join scts_dir, "#{name}.sct"
+  file path do
+    owner 'root'
+    group node['root_group']
+    mode 0644
+    content Base64.decode64 data
+    action :create
+  end
+end
+
 nginx_conf = ::File.join node[:nginx][:dir], 'sites-available', "#{node[id][:fqdn]}.conf"
 
 template nginx_conf do
@@ -143,7 +166,9 @@ template nginx_conf do
     access_log: ::File.join(logs_dir, 'nginx_access.log'),
     error_log: ::File.join(logs_dir, 'nginx_error.log'),
     doc_root: ::File.join(base_dir, '_site'),
-    oscp_stapling: node.chef_environment.start_with?('production')
+    oscp_stapling: node.chef_environment.start_with?('production'),
+    scts: node.chef_environment.start_with?('production'),
+    scts_dir: scts_dir
   )
   action :create
 end
