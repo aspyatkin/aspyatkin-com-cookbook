@@ -168,7 +168,10 @@ template nginx_conf do
     doc_root: ::File.join(base_dir, '_site'),
     oscp_stapling: node.chef_environment.start_with?('production'),
     scts: node.chef_environment.start_with?('production'),
-    scts_dir: scts_dir
+    scts_dir: scts_dir,
+    hpkp: node.chef_environment.start_with?('production'),
+    hpkp_pins: data_bag_item(id, node.chef_environment)['hpkp'],
+    hpkp_max_age: node[id][:hpkp_max_age]
   )
   action :create
 end
