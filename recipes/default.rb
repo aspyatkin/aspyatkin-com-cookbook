@@ -6,6 +6,20 @@ include_recipe 'rbenv::ruby_build'
 
 id = 'aspyatkin-com'
 
+data_bag = data_bag_item(id, node.chef_environment).to_hash
+
+if node.chef_environment.start_with? 'development'
+  node.default[id][:repository] = 'git@github.com:aspyatkin/aspyatkin.com.git'
+  ssh_known_hosts_entry 'github.com'
+
+  data_bag.fetch('ssh', {}).each do |key_type, key_contents|
+    ssh_user_private_key key_type do
+      key key_contents
+      user node[id][:user]
+    end
+  end
+end
+
 base_dir = ::File.join '/var/www', node[id][:fqdn]
 
 directory base_dir do
@@ -23,6 +37,19 @@ git base_dir do
   user node[id][:user]
   group node[id][:group]
   action :sync
+end
+
+if node.chef_environment.start_with? 'development'
+  data_bag.fetch('git_config', {}).each do |key, value|
+    execute "#{base_dir}: git config #{key} \"#{value}\"" do
+      command "git config #{key} \"#{value}\""
+      cwd base_dir
+      user node[id][:user]
+      group node[id][:group]
+      not_if "test \"$(git config --get --local #{key})\" = \"#{value}\"", user: node[id][:user], group: node[id][:group], cwd: base_dir
+      action :run
+    end
+  end
 end
 
 logs_dir = ::File.join base_dir, 'logs'
@@ -72,8 +99,6 @@ rbenv_execute 'Build website' do
   group node[id][:group]
   environment 'JEKYLL_ENV' => node.chef_environment
 end
-
-data_bag = data_bag_item(id, node.chef_environment).to_hash
 
 data_bag.fetch('letsencrypt', {}).each do |fqdn, entries|
   letsencrypt_fqdn_dir = ::File.join letsencrypt_dir, fqdn
