@@ -73,7 +73,9 @@ rbenv_execute 'Build website' do
   environment 'JEKYLL_ENV' => node.chef_environment
 end
 
-data_bag_item(id, node.chef_environment)['letsencrypt'].each do |fqdn, entries|
+data_bag = data_bag_item(id, node.chef_environment).to_hash
+
+data_bag.fetch('letsencrypt', {}).each do |fqdn, entries|
   letsencrypt_fqdn_dir = ::File.join letsencrypt_dir, fqdn
 
   directory letsencrypt_fqdn_dir do
@@ -105,7 +107,7 @@ directory cert_dir do
   action :create
 end
 
-cert_entry = data_bag_item(id, node.chef_environment)['ssl']
+cert_entry = data_bag.fetch 'ssl', nil
 
 cert_name = cert_entry['domains'][0]
 ssl_certificate_path = ::File.join cert_dir, "#{cert_name}.chained.crt"
@@ -140,7 +142,7 @@ end
 
 require 'base64'
 
-data_bag_item(id, node.chef_environment)['scts'].each do |name, data|
+data_bag.fetch('scts', {}).each do |name, data|
   path = ::File.join scts_dir, "#{name}.sct"
   file path do
     owner 'root'
@@ -170,7 +172,7 @@ template nginx_conf do
     scts: node.chef_environment.start_with?('production'),
     scts_dir: scts_dir,
     hpkp: node.chef_environment.start_with?('production'),
-    hpkp_pins: data_bag_item(id, node.chef_environment)['hpkp'],
+    hpkp_pins: data_bag.fetch('hpkp', []),
     hpkp_max_age: node[id][:hpkp_max_age]
   )
   action :create
