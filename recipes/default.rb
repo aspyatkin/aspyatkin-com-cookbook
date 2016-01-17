@@ -62,18 +62,18 @@ end
 
 ENV['CONFIGURE_OPTS'] = '--disable-install-rdoc'
 
-rbenv_ruby '2.2.3' do
-  ruby_version '2.2.3'
+rbenv_ruby node[id][:ruby_version] do
+  ruby_version node[id][:ruby_version]
   global true
 end
 
 rbenv_gem 'bundler' do
-  ruby_version '2.2.3'
+  ruby_version node[id][:ruby_version]
 end
 
 rbenv_execute "Install bundle at #{base_dir}" do
   command 'bundle'
-  ruby_version '2.2.3'
+  ruby_version node[id][:ruby_version]
   cwd base_dir
   user node[id][:user]
   group node[id][:group]
@@ -81,7 +81,7 @@ end
 
 rbenv_execute 'Build website' do
   command 'jekyll build'
-  ruby_version '2.2.3'
+  ruby_version node[id][:ruby_version]
   cwd base_dir
   user node[id][:user]
   group node[id][:group]
