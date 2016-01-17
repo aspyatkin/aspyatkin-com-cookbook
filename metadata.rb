@@ -1,9 +1,9 @@
 name 'aspyatkin-com'
 description 'Installs and configures aspyatkin.com'
-version '1.3.0'
+version '1.3.1'
 
 recipe 'aspyatkin-com', 'Installs and configures aspyatkin.com'
-depends 'latest-git', '~> 1.1.2'
+depends 'latest-git', '~> 1.1.3'
 depends 'latest-nodejs', '~> 1.1.1'
 depends 'modern_nginx', '~> 1.1.0'
 depends 'rbenv', '~> 1.7.1'

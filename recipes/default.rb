@@ -41,13 +41,12 @@ end
 
 if node.chef_environment.start_with? 'development'
   data_bag.fetch('git_config', {}).each do |key, value|
-    execute "#{base_dir}: git config #{key} \"#{value}\"" do
-      command "git config #{key} \"#{value}\""
-      cwd base_dir
+    git_config key do
+      value value
+      scope 'local'
+      path base_dir
       user node[id][:user]
-      group node[id][:group]
-      not_if "test \"$(git config --get --local #{key})\" = \"#{value}\"", user: node[id][:user], group: node[id][:group], cwd: base_dir
-      action :run
+      action :set
     end
   end
 end
