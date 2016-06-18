@@ -4,14 +4,6 @@ server {
 
   server_name <%= @fqdn %>;
 
-  <% if @acme_challenge %>
-  location /.well-known/acme-challenge {
-    default_type text/plain;
-    charset off;
-    alias <%= @acme_challenge_directories[@fqdn] %>;
-  }
-  <% end %>
-
   location / {
     return 301 https://<%= @fqdn %>$request_uri;
   }
@@ -22,14 +14,6 @@ server {
   listen 80;
 
   server_name www.<%= @fqdn %>;
-
-  <% if @acme_challenge %>
-  location /.well-known/acme-challenge {
-    default_type text/plain;
-    charset off;
-    alias <%= @acme_challenge_directories["www.#{@fqdn}"] %>;
-  }
-  <% end %>
 
   location / {
     return 301 https://<%= @fqdn %>$request_uri;
