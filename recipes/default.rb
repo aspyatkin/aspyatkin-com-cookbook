@@ -1,30 +1,17 @@
 include_recipe 'latest-git::default'
-
-node.default['latest-nodejs']['install'] = 'current'
 include_recipe 'latest-nodejs::default'
-
 include_recipe 'modern_nginx::default'
-include_recipe 'modern_nginx::cert'
-
-id = 'aspyatkin-com'
-
-node.default['rbenv']['group_users'] = [
-  node[id]['user']
-]
-
 include_recipe 'rbenv::default'
 include_recipe 'rbenv::ruby_build'
 
-if node.chef_environment.start_with? 'development'
-  node.default[id]['repository'] = 'git@github.com:aspyatkin/aspyatkin.com.git'
-  ssh_known_hosts_entry 'github.com'
+id = 'aspyatkin-com'
 
-  data_bag_item(id, node.chef_environment).to_hash.fetch('ssh', {}).each do |key_type, key_contents|
-    ssh_user_private_key key_type do
-      key key_contents
-      user node[id]['user']
-    end
-  end
+repository_url = "https://github.com/#{node[id]['github_repository']}"
+
+if node.chef_environment.start_with? 'development'
+  ssh_private_key node[id]['user']
+  ssh_known_hosts_entry 'github.com'
+  repository_url = "git@github.com:#{node[id]['github_repository']}.git"
 end
 
 base_dir = ::File.join '/var/www', node[id]['fqdn']
@@ -38,7 +25,7 @@ directory base_dir do
 end
 
 git base_dir do
-  repository node[id]['repository']
+  repository repository_url
   revision node[id]['revision']
   enable_checkout false
   user node[id]['user']
@@ -47,7 +34,12 @@ git base_dir do
 end
 
 if node.chef_environment.start_with? 'development'
-  data_bag_item(id, node.chef_environment).to_hash.fetch('git_config', {}).each do |key, value|
+  git_config = data_bag_item('git', node.chef_environment).to_hash.fetch(
+    'config',
+    {}
+  )
+
+  git_config.each do |key, value|
     git_config key do
       value value
       scope 'local'
@@ -77,6 +69,7 @@ end
 
 rbenv_gem 'bundler' do
   ruby_version node[id]['ruby_version']
+  version node[id]['bundler_version']
 end
 
 rbenv_execute "Install bundle at #{base_dir}" do
@@ -96,29 +89,31 @@ rbenv_execute 'Build website' do
   environment 'JEKYLL_ENV' => node.chef_environment
 end
 
-nginx_conf = ::File.join node['nginx']['dir'], 'sites-available', "#{node[id]['fqdn']}.conf"
+ngx_conf = "#{node[id]['fqdn']}.conf"
 
-template nginx_conf do
-  Chef::Resource::Template.send(:include, ::ModernNginx::Helper)
+tls_certificate node[id]['fqdn']
+tls_item = ::ChefCookbook::TLS.new(node).certificate_entry node[id]['fqdn']
+
+template ::File.join(node['nginx']['dir'], 'sites-available', ngx_conf) do
   source 'nginx.conf.erb'
   mode 0644
   notifies :reload, 'service[nginx]', :delayed
   variables(
     fqdn: node[id]['fqdn'],
-    ssl_certificate: get_ssl_certificate_path(node[id]['fqdn']),
-    ssl_certificate_key: get_ssl_certificate_private_key_path(node[id]['fqdn']),
+    ssl_certificate: tls_item.certificate_path,
+    ssl_certificate_key: tls_item.certificate_private_key_path,
     hsts_max_age: node[id]['hsts_max_age'],
     access_log: ::File.join(logs_dir, 'nginx_access.log'),
     error_log: ::File.join(logs_dir, 'nginx_error.log'),
     doc_root: ::File.join(base_dir, '_site'),
     oscp_stapling: node.chef_environment.start_with?('production'),
     scts: node.chef_environment.start_with?('production'),
-    scts_dir: get_scts_directory(node[id]['fqdn']),
+    scts_dir: tls_item.scts_dir,
     hpkp: node.chef_environment.start_with?('production'),
-    hpkp_pins: get_hpkp_pins(node[id]['fqdn']),
+    hpkp_pins: tls_item.hpkp_pins,
     hpkp_max_age: node[id]['hpkp_max_age']
   )
   action :create
 end
 
-nginx_site "#{node[id]['fqdn']}.conf"
+nginx_site ngx_conf
