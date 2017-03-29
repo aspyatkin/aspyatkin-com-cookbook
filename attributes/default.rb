@@ -1,8 +1,7 @@
 id = 'aspyatkin-com'
 
-default[id]['user'] = 'vagrant'
-default[id]['group'] = 'vagrant'
-default[id]['fqdn'] = 'aspyatkin.dev'
+default[id]['user'] = nil
+default[id]['fqdn'] = nil
 
 default[id]['github_repository'] = 'aspyatkin/aspyatkin.com'
 default[id]['revision'] = 'master'

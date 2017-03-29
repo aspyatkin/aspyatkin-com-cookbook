@@ -26,8 +26,21 @@ server {
 
   server_name www.<%= @fqdn %>;
 
-  ssl_certificate <%= @ssl_certificate %>;
-  ssl_certificate_key <%= @ssl_certificate_key %>;
+  <% if @scts %>
+  ssl_ct on;
+  <% end %>
+
+  ssl_certificate <%= @ssl_rsa_certificate %>;
+  ssl_certificate_key <%= @ssl_rsa_certificate_key %>;
+  <% if @scts %>
+  ssl_ct_static_scts <%= @scts_rsa_dir %>;
+  <% end %>
+
+  ssl_certificate <%= @ssl_ec_certificate %>;
+  ssl_certificate_key <%= @ssl_ec_certificate_key %>;
+  <% if @scts %>
+  ssl_ct_static_scts <%= @scts_ec_dir %>;
+  <% end %>
 
   add_header Strict-Transport-Security "max-age=<%= @hsts_max_age %>" always;
   add_header X-Frame-Options "DENY";
@@ -37,11 +50,6 @@ server {
   ssl_stapling_verify on;
   resolver 8.8.8.8 8.8.4.4 valid=300s;
   resolver_timeout 5s;
-  <% end %>
-
-  <% if @scts %>
-  ssl_ct on;
-  ssl_ct_static_scts <%= @scts_dir %>;
   <% end %>
 
   <% if @hpkp && @hpkp_pins.size > 0 %>
@@ -58,8 +66,21 @@ server {
 
   server_name <%= @fqdn %>;
 
-  ssl_certificate <%= @ssl_certificate %>;
-  ssl_certificate_key <%= @ssl_certificate_key %>;
+  <% if @scts %>
+  ssl_ct on;
+  <% end %>
+
+  ssl_certificate <%= @ssl_rsa_certificate %>;
+  ssl_certificate_key <%= @ssl_rsa_certificate_key %>;
+  <% if @scts %>
+  ssl_ct_static_scts <%= @scts_rsa_dir %>;
+  <% end %>
+
+  ssl_certificate <%= @ssl_ec_certificate %>;
+  ssl_certificate_key <%= @ssl_ec_certificate_key %>;
+  <% if @scts %>
+  ssl_ct_static_scts <%= @scts_ec_dir %>;
+  <% end %>
 
   access_log <%= @access_log %>;
   error_log <%= @error_log %>;
@@ -72,11 +93,6 @@ server {
   ssl_stapling_verify on;
   resolver 8.8.8.8 8.8.4.4 valid=300s;
   resolver_timeout 5s;
-  <% end %>
-
-  <% if @scts %>
-  ssl_ct on;
-  ssl_ct_static_scts <%= @scts_dir %>;
   <% end %>
 
   <% if @hpkp && @hpkp_pins.size > 0 %>

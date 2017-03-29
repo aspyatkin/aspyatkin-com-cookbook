@@ -1,24 +1,24 @@
-include_recipe 'latest-git::default'
 include_recipe 'latest-nodejs::default'
-include_recipe 'modern_nginx::default'
 include_recipe 'rbenv::default'
 include_recipe 'rbenv::ruby_build'
 
 id = 'aspyatkin-com'
 
+h = ::ChefCookbook::AspyatkinCom::Helper.new(node)
+
 repository_url = "https://github.com/#{node[id]['github_repository']}"
 
 if node.chef_environment.start_with? 'development'
-  ssh_private_key node[id]['user']
+  ssh_private_key h.instance_user
   ssh_known_hosts_entry 'github.com'
   repository_url = "git@github.com:#{node[id]['github_repository']}.git"
 end
 
-base_dir = ::File.join '/var/www', node[id]['fqdn']
+base_dir = ::File.join('/var/www', h.fqdn)
 
 directory base_dir do
-  owner node[id]['user']
-  group node[id]['group']
+  owner h.instance_user
+  group h.instance_group
   mode 0755
   recursive true
   action :create
@@ -28,12 +28,12 @@ git base_dir do
   repository repository_url
   revision node[id]['revision']
   enable_checkout false
-  user node[id]['user']
-  group node[id]['group']
+  user h.instance_user
+  group h.instance_group
   action :sync
 end
 
-if node.chef_environment.start_with? 'development'
+if node.chef_environment.start_with?('development')
   git_config = data_bag_item('git', node.chef_environment).to_hash.fetch(
     'config',
     {}
@@ -44,17 +44,17 @@ if node.chef_environment.start_with? 'development'
       value value
       scope 'local'
       path base_dir
-      user node[id]['user']
+      user h.instance_user
       action :set
     end
   end
 end
 
-logs_dir = ::File.join base_dir, 'logs'
+logs_dir = ::File.join(base_dir, 'logs')
 
 directory logs_dir do
-  owner node[id]['user']
-  group node[id]['group']
+  owner h.instance_user
+  group h.instance_group
   mode 0755
   recursive true
   action :create
@@ -76,44 +76,50 @@ rbenv_execute "Install bundle at #{base_dir}" do
   command 'bundle'
   ruby_version node[id]['ruby_version']
   cwd base_dir
-  user node[id]['user']
-  group node[id]['group']
+  user h.instance_user
+  group h.instance_group
 end
 
 rbenv_execute 'Build website' do
   command 'jekyll build'
   ruby_version node[id]['ruby_version']
   cwd base_dir
-  user node[id]['user']
-  group node[id]['group']
+  user h.instance_user
+  group h.instance_group
   environment 'JEKYLL_ENV' => node.chef_environment
 end
 
-ngx_conf = "#{node[id]['fqdn']}.conf"
+tls_rsa_certificate h.fqdn do
+  action :deploy
+end
 
-tls_certificate node[id]['fqdn']
-tls_item = ::ChefCookbook::TLS.new(node).certificate_entry node[id]['fqdn']
+tls_rsa_item = ::ChefCookbook::TLS.new(node).rsa_certificate_entry(h.fqdn)
 
-template ::File.join(node['nginx']['dir'], 'sites-available', ngx_conf) do
-  source 'nginx.conf.erb'
-  mode 0644
-  notifies :reload, 'service[nginx]', :delayed
+tls_ec_certificate h.fqdn do
+  action :deploy
+end
+
+tls_ec_item = ::ChefCookbook::TLS.new(node).ec_certificate_entry(h.fqdn)
+
+nginx_site h.fqdn do
+  template 'nginx.conf.erb'
   variables(
-    fqdn: node[id]['fqdn'],
-    ssl_certificate: tls_item.certificate_path,
-    ssl_certificate_key: tls_item.certificate_private_key_path,
+    fqdn: h.fqdn,
+    ssl_rsa_certificate: tls_rsa_item.certificate_path,
+    ssl_rsa_certificate_key: tls_rsa_item.certificate_private_key_path,
+    ssl_ec_certificate: tls_ec_item.certificate_path,
+    ssl_ec_certificate_key: tls_ec_item.certificate_private_key_path,
     hsts_max_age: node[id]['hsts_max_age'],
     access_log: ::File.join(logs_dir, 'nginx_access.log'),
     error_log: ::File.join(logs_dir, 'nginx_error.log'),
     doc_root: ::File.join(base_dir, '_site'),
     oscp_stapling: node.chef_environment.start_with?('production'),
     scts: node.chef_environment.start_with?('production'),
-    scts_dir: tls_item.scts_dir,
+    scts_rsa_dir: tls_rsa_item.scts_dir,
+    scts_ec_dir: tls_ec_item.scts_dir,
     hpkp: node.chef_environment.start_with?('production'),
-    hpkp_pins: tls_item.hpkp_pins,
+    hpkp_pins: (tls_rsa_item.hpkp_pins + tls_ec_item.hpkp_pins).uniq,
     hpkp_max_age: node[id]['hpkp_max_age']
   )
-  action :create
+  action :enable
 end
-
-nginx_site ngx_conf
