@@ -101,5 +101,10 @@ server {
 
   keepalive_timeout 300;
   charset utf-8;
-  root <%= @doc_root %>;
+
+  error_page 404 /404.html;
+
+  location / {
+    root <%= @doc_root %>;
+  }
 }
