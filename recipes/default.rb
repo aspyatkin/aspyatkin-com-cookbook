@@ -50,16 +50,6 @@ if node.chef_environment.start_with?('development')
   end
 end
 
-logs_dir = ::File.join(base_dir, 'logs')
-
-directory logs_dir do
-  owner h.instance_user
-  group h.instance_group
-  mode 0755
-  recursive true
-  action :create
-end
-
 ENV['CONFIGURE_OPTS'] = '--disable-install-rdoc'
 
 rbenv_ruby node[id]['ruby_version'] do
@@ -110,8 +100,8 @@ nginx_site h.fqdn do
     ssl_ec_certificate: tls_ec_item.certificate_path,
     ssl_ec_certificate_key: tls_ec_item.certificate_private_key_path,
     hsts_max_age: node[id]['hsts_max_age'],
-    access_log: ::File.join(logs_dir, 'nginx_access.log'),
-    error_log: ::File.join(logs_dir, 'nginx_error.log'),
+    access_log: ::File.join(node['nginx']['log_dir'], "#{h.fqdn}_access.log"),
+    error_log: ::File.join(node['nginx']['log_dir'], "#{h.fqdn}_error.log"),
     doc_root: ::File.join(base_dir, '_site'),
     oscp_stapling: node.chef_environment.start_with?('production'),
     scts: node.chef_environment.start_with?('production'),
