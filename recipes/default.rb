@@ -1,10 +1,16 @@
 include_recipe 'latest-nodejs::default'
+
+h = ::ChefCookbook::AspyatkinCom::Helper.new(node)
+
+node.default['rbenv']['group_users'] = [
+  h.root_user,
+  h.instance_user
+]
+
 include_recipe 'rbenv::default'
 include_recipe 'rbenv::ruby_build'
 
 id = 'aspyatkin-com'
-
-h = ::ChefCookbook::AspyatkinCom::Helper.new(node)
 
 repository_url = "https://github.com/#{node[id]['github_repository']}"
 

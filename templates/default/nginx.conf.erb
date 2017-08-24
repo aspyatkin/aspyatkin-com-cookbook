@@ -99,6 +99,9 @@ server {
   more_set_headers 'Public-Key-Pins: <%= @hpkp_pins.map{ |pin| "pin-sha256=\"#{pin}\"" }.join '; ' %>; max-age=<%= @hpkp_max_age %>;';
   <% end %>
 
+  more_set_headers 'Cache-Control: must-revalidate';
+  etag on;
+
   keepalive_timeout 300;
   charset utf-8;
 

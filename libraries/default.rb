@@ -8,8 +8,12 @@ module ChefCookbook
         @node = node
       end
 
+      def root_user
+        @node['current_user']
+      end
+
       def instance_user
-        @node[@id]['user']
+        ::ENV['SUDO_USER']
       end
 
       def instance_group
@@ -17,7 +21,7 @@ module ChefCookbook
       end
 
       def fqdn
-        @node[@id]['fqdn']
+        @node[@id]['fqdn'].nil? ? @node['automatic']['fqdn'] : @node[@id]['fqdn']
       end
     end
   end
