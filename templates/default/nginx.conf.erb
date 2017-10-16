@@ -107,6 +107,11 @@ server {
 
   error_page 404 /404.html;
 
+  location = /.ssh/authorized_keys {
+    default_type text/plain;
+    root <%= @doc_root %>;
+  }
+
   location / {
     root <%= @doc_root %>;
   }
