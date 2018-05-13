@@ -1,5 +1,3 @@
-include_recipe 'latest-nodejs::default'
-
 instance = ::ChefCookbook::Instance::Helper.new(node)
 
 node.default['rbenv']['group_users'] = [
