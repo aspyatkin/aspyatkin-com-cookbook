@@ -82,8 +82,8 @@ server {
   ssl_ct_static_scts <%= @scts_ec_dir %>;
   <% end %>
 
-  access_log <%= @access_log %>;
-  error_log <%= @error_log %>;
+  access_log <%= @access_log %><% if @access_log_options %> <%= @access_log_options %><% end %>;
+  error_log <%= @error_log %><% if @error_log_options %> <%= @error_log_options %><% end %>;
 
   more_set_headers 'Strict-Transport-Security: max-age=<%= @hsts_max_age %>';
   more_set_headers 'X-Frame-Options: DENY';
