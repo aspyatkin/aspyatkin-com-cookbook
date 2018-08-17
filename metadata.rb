@@ -1,6 +1,6 @@
 name 'aspyatkin-com'
 description 'Installs and configures aspyatkin.com'
-version '1.12.0'
+version '1.13.0'
 
 recipe 'aspyatkin-com', 'Installs and configures aspyatkin.com'
 depends 'git'

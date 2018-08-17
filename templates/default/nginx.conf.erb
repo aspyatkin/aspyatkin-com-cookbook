@@ -5,59 +5,8 @@ server {
   server_name <%= @fqdn %>;
 
   location / {
-    return 301 https://<%= @fqdn %>$request_uri;
+    return 301 https://$server_name$request_uri;
   }
-}
-
-server {
-  listen [::]:80;
-  listen 80;
-
-  server_name www.<%= @fqdn %>;
-
-  location / {
-    return 301 https://<%= @fqdn %>$request_uri;
-  }
-}
-
-server {
-  listen [::]:443 ssl http2;
-  listen 443 ssl http2;
-
-  server_name www.<%= @fqdn %>;
-
-  <% if @scts %>
-  ssl_ct on;
-  <% end %>
-
-  ssl_certificate <%= @ssl_rsa_certificate %>;
-  ssl_certificate_key <%= @ssl_rsa_certificate_key %>;
-  <% if @scts %>
-  ssl_ct_static_scts <%= @scts_rsa_dir %>;
-  <% end %>
-
-  ssl_certificate <%= @ssl_ec_certificate %>;
-  ssl_certificate_key <%= @ssl_ec_certificate_key %>;
-  <% if @scts %>
-  ssl_ct_static_scts <%= @scts_ec_dir %>;
-  <% end %>
-
-  more_set_headers 'Strict-Transport-Security: max-age=<%= @hsts_max_age %>';
-  more_set_headers 'X-Frame-Options: DENY';
-
-  <% if @oscp_stapling %>
-  ssl_stapling on;
-  ssl_stapling_verify on;
-  resolver 8.8.8.8 8.8.4.4 valid=300s;
-  resolver_timeout 5s;
-  <% end %>
-
-  <% if @hpkp && @hpkp_pins.size > 0 %>
-  more_set_headers 'Public-Key-Pins: <%= @hpkp_pins.map{ |pin| "pin-sha256=\"#{pin}\"" }.join '; ' %>; max-age=<%= @hpkp_max_age %>;';
-  <% end %>
-
-  keepalive_timeout 300;
-  return 301 https://<%= @fqdn %>$request_uri;
 }
 
 server {
@@ -85,8 +34,8 @@ server {
   access_log <%= @access_log %><% if @access_log_options %> <%= @access_log_options %><% end %>;
   error_log <%= @error_log %><% if @error_log_options %> <%= @error_log_options %><% end %>;
 
-  more_set_headers 'Strict-Transport-Security: max-age=<%= @hsts_max_age %>';
-  more_set_headers 'X-Frame-Options: DENY';
+  add_header Strict-Transport-Security 'max-age=<%= @hsts_max_age %>' always;
+  add_header X-Frame-Options DENY always;
 
   <% if @oscp_stapling %>
   ssl_stapling on;
@@ -96,10 +45,10 @@ server {
   <% end %>
 
   <% if @hpkp && @hpkp_pins.size > 0 %>
-  more_set_headers 'Public-Key-Pins: <%= @hpkp_pins.map{ |pin| "pin-sha256=\"#{pin}\"" }.join '; ' %>; max-age=<%= @hpkp_max_age %>;';
+  add_header Public-Key-Pins '<%= @hpkp_pins.map{ |pin| "pin-sha256=\"#{pin}\"" }.join '; ' %>; max-age=<%= @hpkp_max_age %>;' always;
   <% end %>
 
-  more_set_headers 'Cache-Control: must-revalidate';
+  add_header Cache-Control must-revalidate always;
   etag on;
 
   keepalive_timeout 300;
