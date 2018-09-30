@@ -1,8 +1,8 @@
-id = 'aspyatkin-com'
+id = 'personal-website'
 
 default[id]['fqdn'] = nil
 
-default[id]['github_repository'] = 'aspyatkin/aspyatkin.com'
+default[id]['github_repository'] = 'aspyatkin/personal-website'
 default[id]['revision'] = 'master'
 
 default[id]['hsts_max_age'] = 15_768_000

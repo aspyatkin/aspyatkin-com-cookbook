@@ -8,7 +8,7 @@ node.default['rbenv']['group_users'] = [
 include_recipe 'rbenv::default'
 include_recipe 'rbenv::ruby_build'
 
-id = 'aspyatkin-com'
+id = 'personal-website'
 
 repository_url = "https://github.com/#{node[id]['github_repository']}"
 

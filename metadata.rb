@@ -1,8 +1,8 @@
-name 'aspyatkin-com'
-description 'Installs and configures aspyatkin.com'
-version '1.13.0'
+name 'personal-website'
+description 'Installs and configures personal website'
+version '1.14.0'
 
-recipe 'aspyatkin-com', 'Installs and configures aspyatkin.com'
+recipe 'personal-website', 'Installs and configures personal website'
 depends 'git'
 depends 'nodejs'
 depends 'nginx'
