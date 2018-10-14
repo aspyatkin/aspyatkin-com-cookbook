@@ -25,10 +25,12 @@ server {
   ssl_ct_static_scts <%= @scts_rsa_dir %>;
   <% end %>
 
+  <% if @ec_certificates %>
   ssl_certificate <%= @ssl_ec_certificate %>;
   ssl_certificate_key <%= @ssl_ec_certificate_key %>;
   <% if @scts %>
   ssl_ct_static_scts <%= @scts_ec_dir %>;
+  <% end %>
   <% end %>
 
   access_log <%= @access_log %><% if @access_log_options %> <%= @access_log_options %><% end %>;

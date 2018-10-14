@@ -1,7 +1,9 @@
 id = 'personal-website'
 
 default[id]['fqdn'] = nil
+default[id]['ec_certificates'] = true
 
+default[id]['develop'] = false
 default[id]['github_repository'] = 'aspyatkin/personal-website'
 default[id]['revision'] = 'master'
 
