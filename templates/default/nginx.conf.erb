@@ -1,6 +1,8 @@
 server {
-  listen [::]:80;
-  listen 80;
+  <% if @listen_ipv6 %>
+  listen [::]:80<% if @default_server %> default_server<% end %>;
+  <% end %>
+  listen 80<% if @default_server %> default_server<% end %>;
 
   server_name <%= @fqdn %>;
 
@@ -10,8 +12,10 @@ server {
 }
 
 server {
-  listen [::]:443 ssl http2;
-  listen 443 ssl http2;
+  <% if @listen_ipv6 %>
+  listen [::]:443 ssl http2<% if @default_server %> default_server<% end %>;
+  <% end %>
+  listen 443 ssl http2<% if @default_server %> default_server<% end %>;
 
   server_name <%= @fqdn %>;
 
@@ -38,16 +42,16 @@ server {
 
   add_header Strict-Transport-Security 'max-age=<%= @hsts_max_age %>' always;
   add_header X-Frame-Options DENY always;
+  add_header X-Content-Type-Options nosniff always;
+  add_header X-XSS-Protection "1; mode=block" always;
+  add_header Content-Security-Policy "default-src 'none'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://imgs.xkcd.com; script-src 'self' 'sha256-LyJwunNyGIj7nYQyVINDFtObz1aXFMmPN1p0WWoyVVE='" always;
+  add_header Referrer-Policy strict-origin always;
 
   <% if @oscp_stapling %>
   ssl_stapling on;
   ssl_stapling_verify on;
   resolver 8.8.8.8 8.8.4.4 valid=300s;
   resolver_timeout 5s;
-  <% end %>
-
-  <% if @hpkp && @hpkp_pins.size > 0 %>
-  add_header Public-Key-Pins '<%= @hpkp_pins.map{ |pin| "pin-sha256=\"#{pin}\"" }.join '; ' %>; max-age=<%= @hpkp_max_age %>;' always;
   <% end %>
 
   add_header Cache-Control must-revalidate always;
@@ -60,6 +64,11 @@ server {
 
   location = /.ssh/authorized_keys {
     default_type text/plain;
+    root <%= @doc_root %>;
+  }
+
+  location ~ \.pdf$ {
+    add_header Content-Security-Policy "default-src 'none'; object-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'" always;
     root <%= @doc_root %>;
   }
 
