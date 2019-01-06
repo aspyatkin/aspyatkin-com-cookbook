@@ -6,6 +6,7 @@ property :user, String, required: true
 property :group, String, required: true
 
 property :develop, [TrueClass, FalseClass], default: false
+property :git_config, Hash, default: {}
 property :github_repository, String, default: 'aspyatkin/personal-website'
 property :revision, String, default: 'master'
 
@@ -20,12 +21,9 @@ property :error_log_options, String, default: 'warn'
 default_action :install
 
 action :install do
-  secret = ::ChefCookbook::Secret::Helper.new(node)
-
   repository_url = "https://github.com/#{new_resource.github_repository}"
 
   if new_resource.develop
-    ssh_private_key new_resource.user
     ssh_known_hosts_entry 'github.com'
     repository_url = "git@github.com:#{new_resource.github_repository}.git"
   end
@@ -50,9 +48,7 @@ action :install do
   end
 
   if new_resource.develop
-    git_config = secret.get('git:config', prefix_fqdn: false, default: {})
-
-    git_config.each do |key, value|
+    new_resource.git_config.each do |key, value|
       git_config key do
         value value
         scope 'local'
