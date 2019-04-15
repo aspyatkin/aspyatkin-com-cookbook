@@ -19,26 +19,13 @@ server {
 
   server_name <%= @fqdn %>;
 
-  <% if @scts %>
-  ssl_ct on;
-  <% end %>
-
-  ssl_certificate <%= @ssl_rsa_certificate %>;
-  ssl_certificate_key <%= @ssl_rsa_certificate_key %>;
-  <% if @scts %>
-  ssl_ct_static_scts <%= @scts_rsa_dir %>;
-  <% end %>
-
-  <% if @ec_certificates %>
-  ssl_certificate <%= @ssl_ec_certificate %>;
-  ssl_certificate_key <%= @ssl_ec_certificate_key %>;
-  <% if @scts %>
-  ssl_ct_static_scts <%= @scts_ec_dir %>;
-  <% end %>
-  <% end %>
-
   access_log <%= @access_log %><% if @access_log_options %> <%= @access_log_options %><% end %>;
   error_log <%= @error_log %><% if @error_log_options %> <%= @error_log_options %><% end %>;
+
+  <% @certificate_entries.each do |item| %>
+  ssl_certificate <%= item.certificate_path %>; # CRC32: <%= item.certificate_checksum %>
+  ssl_certificate_key <%= item.certificate_private_key_path %>; # CRC32: <%= item.certificate_private_key_checksum %>
+  <% end %>
 
   add_header Strict-Transport-Security 'max-age=<%= @hsts_max_age %>' always;
   add_header X-Frame-Options DENY always;
@@ -50,8 +37,8 @@ server {
   <% if @oscp_stapling %>
   ssl_stapling on;
   ssl_stapling_verify on;
-  resolver 8.8.8.8 8.8.4.4 valid=300s;
-  resolver_timeout 5s;
+  resolver <%= @resolvers.join(' ') %> valid=<%= @resolver_valid %>s;
+  resolver_timeout <%= @resolver_timeout %>s;
   <% end %>
 
   add_header Cache-Control must-revalidate always;
