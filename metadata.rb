@@ -1,10 +1,10 @@
 name 'personal-website'
 description 'Installs and configures personal website'
-version '2.2.0'
+version '2.3.0'
 
 recipe 'personal-website', 'Installs and configures personal website'
 depends 'git'
-depends 'ruby_rbenv', '~> 2.1.2'
+depends 'ruby_rbenv', '>= 2.4.0'
 depends 'ssh_known_hosts', '~> 4.0.0'
 depends 'tls', '>= 3.2.0'
 depends 'ngx', '>= 2.1.0'
